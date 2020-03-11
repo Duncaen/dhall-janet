@@ -1,0 +1,2 @@
+(declare-project
+  :name "dhall")
