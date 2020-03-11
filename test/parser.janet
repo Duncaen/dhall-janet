@@ -12,3 +12,4 @@
 (pp (parser/parse `"A" ++ "B"`))
 (pp (parser/parse `"foo${fizz}bar"`))
 (pp (parser/parse `"A${x}B${x}C"`))
+(pp (parser/parse `"a\$\b\f\n\r\t\"\\a"`))

@@ -97,16 +97,16 @@
 
       :double-quote-escaped
         (+
-          "\x22"                      # '"'    quotation mark  U+0022
-          "\x24"                      # '$'    dollar sign     U+0024
-          "\x5C"                      # '\'    reverse solidus U+005C
-          "\x2F"                      # '/'    solidus         U+002F
-          "\x62"                      # 'b'    backspace       U+0008
-          "\x66"                      # 'f'    form feed       U+000C
-          "\x6E"                      # 'n'    line feed       U+000A
-          "\x72"                      # 'r'    carriage return U+000D
-          "\x74"                      # 't'    tab             U+0009
-          (* "\x75" :unicode-escape)) # 'uXXXX' / 'u{XXXX}'    U+XXXX
+          (* "\x22" (constant "\x22"))  # '"'    quotation mark  U+0022
+          (* "\x24" (constant "\x24"))  # '$'    dollar sign     U+0024
+          (* "\x5C" (constant "\x5c"))  # '\'    reverse solidus U+005C
+          (* "\x2F" (constant "\x2F"))  # '/'    solidus         U+002F
+          (* "\x62" (constant "\x08"))  # 'b'    backspace       U+0008
+          (* "\x66" (constant "\x0C"))  # 'f'    form feed       U+000C
+          (* "\x6E" (constant "\x0A"))  # 'n'    line feed       U+000A
+          (* "\x72" (constant "\x0D"))  # 'r'    carriage return U+000D
+          (* "\x74" (constant "\x00"))  # 't'    tab             U+0009
+          (* "\x75" :unicode-escape))   # 'uXXXX' / 'u{XXXX}'    U+XXXX
 
       # Valid Unicode escape sequences are as follows:
       #
