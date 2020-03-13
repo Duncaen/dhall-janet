@@ -13,8 +13,11 @@
       :tab "\t"
 
       :block-comment (* "{-" :block-comment-continue)
-      :block-comment-char (* (range "\x20\x7F" :tab :end-of-line))
-      :block-comment-continue (+ "-}" (* :block-comment))
+      :block-comment-char (+ (range "\x20\x7F") :tab :end-of-line)
+      :block-comment-continue
+        (+ "-}"
+           (* :block-comment :block-comment-continue)
+           (* :block-comment-char :block-comment-continue))
 
       :not-end-of-line (+ :w :tab (set " "))
 

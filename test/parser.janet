@@ -1,5 +1,6 @@
 (import ../parser)
 
+(pp (parser/parse `{- foo -}`))
 (pp (parser/parse `\( x : Bool ) -> x@1`))
 (pp (parser/parse `\( a : y ) -> x`))
 (pp (parser/parse `if a then b else c`))
@@ -13,3 +14,10 @@
 (pp (parser/parse `"foo${fizz}bar"`))
 (pp (parser/parse `"A${x}B${x}C"`))
 (pp (parser/parse `"a\$\b\f\n\r\t\"\\a"`))
+(pp (parser/parse `{- foo -}1`))
+(pp (parser/parse `1{- foo -}`))
+(pp (parser/parse `1{- foo -}1`))
+(pp (parser/parse `{-foo-}1`))
+(pp (parser/parse `{-
+                    foo
+                    -}1`))
