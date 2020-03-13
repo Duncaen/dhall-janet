@@ -551,9 +551,9 @@
 
       :record-type-or-literal
         (+
-         :empty-record-literal
+         (* :empty-record-literal (constant {:type :RecordLiteral}))
          :non-empty-record-type-or-literal
-         :empty-record-type)
+         (* :empty-record-type (constant {:type :RecordType})))
 
       :empty-record-literal "="
       :empty-record-type ""
@@ -572,7 +572,7 @@
 
       :union-type (+ :non-empty-union-type :empty-union-type)
 
-      :empty-union-type ""
+      :empty-union-type (* "" (constant {:type :UnionType}))
 
       :non-empty-union-type (* :union-type-entry (any (* :whsp "|" :whsp :union-type-entry)))
 

@@ -21,3 +21,7 @@
 (pp (parser/parse `{-
                     foo
                     -}1`))
+(pp (parser/parse `{=}`))
+(pp (parser/parse `{}`))
+(pp (parser/parse `<>`))
+(pp (parser/parse `<|>`))
