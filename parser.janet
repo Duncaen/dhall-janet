@@ -30,7 +30,7 @@
       (do
         (var out first)
         (each x rest
-          (set out {:type ,op :l out :r x}))
+          (set out {:term ,op :l out :r x}))
         out)
       first)))
 
@@ -222,10 +222,10 @@
                     :string (buffer/push-string str x)
                     :struct (do
                       (array/push chunks
-                        {:type :Chunk :Prefix (string str) :E x})
+                        {:term :Chunk :Prefix (string str) :E x})
                       (buffer/clear str))
                     (error "unhandled type in double-quoted-literal")))
-                {:type :TextLit :Chunks chunks :Suffix (string str)}))
+                {:term :TextLit :Chunks chunks :Suffix (string str)}))
 
       # NOTE: The only way to end a single-quote string literal with a single quote is
       # to either interpolate the single quote, like this:
@@ -294,42 +294,42 @@
 
       :builtin
        (+
-        (* :Natural-fold      (constant {:type :Natural-fold}))
-        (* :Natural-build     (constant {:type :Natural-build}))
-        (* :Natural-isZero    (constant {:type :Natural-isZero}))
-        (* :Natural-even      (constant {:type :Natural-even}))
-        (* :Natural-odd       (constant {:type :Natural-odd}))
-        (* :Natural-toInteger (constant {:type :Natural-toInteger}))
-        (* :Natural-show      (constant {:type :Natural-show}))
-        (* :Integer-toDouble  (constant {:type :Integer-toDouble}))
-        (* :Integer-show      (constant {:type :Integer-show}))
-        (* :Integer-negate    (constant {:type :Integer-negate}))
-        (* :Integer-clamp     (constant {:type :Integer-clamp}))
-        (* :Natural-subtract  (constant {:type :Natural-substract}))
-        (* :Double-show       (constant {:type :Double-show}))
-        (* :List-build        (constant {:type :List-build}))
-        (* :List-fold         (constant {:type :List-fold}))
-        (* :List-length       (constant {:type :List-length}))
-        (* :List-head         (constant {:type :List-head}))
-        (* :List-last         (constant {:type :List-last}))
-        (* :List-indexed      (constant {:type :List-indexed}))
-        (* :List-reverse      (constant {:type :List-reverse}))
-        (* :Optional-fold     (constant {:type :Optional-fold}))
-        (* :Optional-build    (constant {:type :Optional-build}))
-        (* :Text-show         (constant {:type :Text-show}))
-        (* :Bool              (constant {:type :Bool}))
-        (* :True              (constant {:type :True}))
-        (* :False             (constant {:type :False}))
-        (* :Optional          (constant {:type :Optional}))
-        (* :None              (constant {:type :None}))
-        (* :Natural           (constant {:type :Natural}))
-        (* :Integer           (constant {:type :Integer}))
-        (* :Double            (constant {:type :Double}))
-        (* :Text              (constant {:type :Text}))
-        (* :List              (constant {:type :List}))
-        (* :Type              (constant {:type :Type}))
-        (* :Kind              (constant {:type :Kind}))
-        (* :Sort              (constant {:type :Sort})))
+        (* :Natural-fold      (constant {:term :Natural-fold}))
+        (* :Natural-build     (constant {:term :Natural-build}))
+        (* :Natural-isZero    (constant {:term :Natural-isZero}))
+        (* :Natural-even      (constant {:term :Natural-even}))
+        (* :Natural-odd       (constant {:term :Natural-odd}))
+        (* :Natural-toInteger (constant {:term :Natural-toInteger}))
+        (* :Natural-show      (constant {:term :Natural-show}))
+        (* :Integer-toDouble  (constant {:term :Integer-toDouble}))
+        (* :Integer-show      (constant {:term :Integer-show}))
+        (* :Integer-negate    (constant {:term :Integer-negate}))
+        (* :Integer-clamp     (constant {:term :Integer-clamp}))
+        (* :Natural-subtract  (constant {:term :Natural-substract}))
+        (* :Double-show       (constant {:term :Double-show}))
+        (* :List-build        (constant {:term :List-build}))
+        (* :List-fold         (constant {:term :List-fold}))
+        (* :List-length       (constant {:term :List-length}))
+        (* :List-head         (constant {:term :List-head}))
+        (* :List-last         (constant {:term :List-last}))
+        (* :List-indexed      (constant {:term :List-indexed}))
+        (* :List-reverse      (constant {:term :List-reverse}))
+        (* :Optional-fold     (constant {:term :Optional-fold}))
+        (* :Optional-build    (constant {:term :Optional-build}))
+        (* :Text-show         (constant {:term :Text-show}))
+        (* :Bool              (constant {:term :Bool}))
+        (* :True              (constant {:term :True}))
+        (* :False             (constant {:term :False}))
+        (* :Optional          (constant {:term :Optional}))
+        (* :None              (constant {:term :None}))
+        (* :Natural           (constant {:term :Natural}))
+        (* :Integer           (constant {:term :Integer}))
+        (* :Double            (constant {:term :Double}))
+        (* :Text              (constant {:term :Text}))
+        (* :List              (constant {:term :List}))
+        (* :term              (constant {:term :term}))
+        (* :Kind              (constant {:term :Kind}))
+        (* :Sort              (constant {:term :Sort})))
 
       # Reserved identifiers, needed for some special cases of parsing
       :Optional "Optional"
@@ -345,7 +345,7 @@
       :Natural           "Natural"
       :Integer           "Integer"
       :Double            "Double"
-      :Type              "Type"
+      :term              "Type"
       :Kind              "Kind"
       :Sort              "Sort"
       :Natural-fold      "Natural/fold"
@@ -403,12 +403,12 @@
         (+
          # Hexadecimal with "0x" prefix
          (/ (<- (* "0x" (some :HEXDIG)))
-              ,(fn [s] {:type :NaturalLiteral :n (scan-number s)}))
+              ,(fn [s] {:term :NaturalLiteral :n (scan-number s)}))
          # Decimal; leading 0 digits are not allowed
          (/ (<- (* (range "19") (any :DIGIT)))
-              ,(fn [s] {:type :NaturalLiteral :n (scan-number s)}))
+              ,(fn [s] {:term :NaturalLiteral :n (scan-number s)}))
          # ... except for 0 itself
-         (* "0" (constant {:type :NaturalLiteral :n 0})))
+         (* "0" (constant {:term :NaturalLiteral :n 0})))
 
       :integer-literal (* (+ "+" "-") :natural-literal)
 
@@ -423,7 +423,7 @@
                      ,(fn variable
                         [a &opt b]
                         (default b 0)
-                        {:type :Var :name a :index b}))
+                        {:term :Var :name a :index b}))
 
       # :import (* :import-hashed (? (* :whsp :as :whsp1 (+ :Text :Location))))
 
@@ -434,11 +434,11 @@
          # "\(x : a) -> b"
          (/ (* :lambda :whsp "(" :whsp (<- :nonreserved-label) :whsp ":" :whsp1 :expression :whsp ")"
                  :whsp :arrow :whsp :expression)
-              ,(fn lambda [x y z] {:type :Lambda :label x :typ y :body z}))
+              ,(fn lambda [x y z] {:term :Lambda :label x :typ y :body z}))
 
          # "if a then b else c"
          (/ (* :if :whsp1 :expression :whsp :then :whsp1 :expression :whsp :else :whsp1 :expression)
-              ,(fn if [a b c] {:type :If :a a :b b :c c}))
+              ,(fn if [a b c] {:term :If :a a :b b :c c}))
 
          # "let x : t = e1 in e2"
          # "let x     = e1 in e2"
@@ -446,14 +446,14 @@
          # "let x = e1 let y = e2 in e3"
          # "let x = e1 in let y = e2 in e3"
          (/ (* (group (some :let-binding)) :in :whsp1 :expression)
-              ,(fn let [a b] {:type :Let :bindings a :body b}))
+              ,(fn let [a b] {:term :Let :bindings a :body b}))
 
          # "forall (x : a) -> b"
          (/ (* :forall :whsp "(" :whsp (<- :nonreserved-label) :whsp ":" :whsp1 :expression :whsp ")"
                  :whsp :arrow :whsp :expression)
               ,(fn forall
                  [x a b]
-                 {:type :Pi :label x :typ a :body b}))
+                 {:term :Pi :label x :typ a :body b}))
 
          #  "a -> b"
          #
@@ -461,7 +461,7 @@
          (/ (* :operator-expression :whsp :arrow :whsp :expression)
               ,(fn operator-expression
                  [a b]
-                 {:type :Pi :label "_" :typ a :body b}))
+                 {:term :Pi :label "_" :typ a :body b}))
 
          # "merge e1 e2 : t"
          #
@@ -554,7 +554,7 @@
               (do
                 (var out e)
                 (each arg args
-                  (set out {:type :App :fn out :arg arg}))
+                  (set out {:term :App :fn out :arg arg}))
                 out)
               e)))
 
@@ -582,11 +582,11 @@
       # the function `foo` to the relative path `./bar`)
       :selector-expression (* :primitive-expression (any (* :whsp "." :whsp :selector)))
 
-      :selector (+ :any-label :labels :type-selector)
+      :selector (+ :any-label :labels :term-selector)
 
       :labels (* "{" :whsp (? (* :any-label-or-some :whsp (any (* "," :whsp :any-label-or-some :whsp)))) "}")
 
-      :type-selector (* "(" :whsp :expression :whsp ")")
+      :term-selector (* "(" :whsp :expression :whsp ")")
 
       # NOTE: Backtrack when parsing the first three alternatives (i.e. the numeric
       # literals).  This is because they share leading characters in common
@@ -617,9 +617,9 @@
 
       :record-type-or-literal
         (+
-         (* :empty-record-literal (constant {:type :RecordLiteral}))
+         (* :empty-record-literal (constant {:term :RecordLiteral}))
          :non-empty-record-type-or-literal
-         (* :empty-record-type (constant {:type :RecordType})))
+         (* :empty-record-type (constant {:term :RecordType})))
 
       :empty-record-literal "="
       :empty-record-type ""
@@ -638,7 +638,7 @@
 
       :union-type (+ :non-empty-union-type :empty-union-type)
 
-      :empty-union-type (* "" (constant {:type :UnionType}))
+      :empty-union-type (* "" (constant {:term :UnionType}))
 
       :non-empty-union-type (* :union-type-entry (any (* :whsp "|" :whsp :union-type-entry)))
 
