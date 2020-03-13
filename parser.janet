@@ -434,7 +434,7 @@
          # "\(x : a) -> b"
          (/ (* :lambda :whsp "(" :whsp (<- :nonreserved-label) :whsp ":" :whsp1 :expression :whsp ")"
                  :whsp :arrow :whsp :expression)
-              ,(fn lambda [x y z] {:term :Lambda :label x :typ y :body z}))
+              ,(fn lambda [x y z] {:term :Lambda :label x :type y :body z}))
 
          # "if a then b else c"
          (/ (* :if :whsp1 :expression :whsp :then :whsp1 :expression :whsp :else :whsp1 :expression)
@@ -453,7 +453,7 @@
                  :whsp :arrow :whsp :expression)
               ,(fn forall
                  [x a b]
-                 {:term :Pi :label x :typ a :body b}))
+                 {:term :Pi :label x :type a :body b}))
 
          #  "a -> b"
          #
@@ -461,7 +461,7 @@
          (/ (* :operator-expression :whsp :arrow :whsp :expression)
               ,(fn operator-expression
                  [a b]
-                 {:term :Pi :label "_" :typ a :body b}))
+                 {:term :Pi :label "_" :type a :body b}))
 
          # "merge e1 e2 : t"
          #
@@ -499,8 +499,8 @@
                   ,(fn let-binding
                      [a & xs]
                      (case (length xs)
-                       2 {:name a :typ (xs 0) :value (xs 1)}
-                       1 {:name a :typ nil    :value (xs 0)}
+                       2 {:name a :type (xs 0) :value (xs 1)}
+                       1 {:name a :type nil    :value (xs 0)}
                        (error (string/format "got unhandled length: %d: %q" (length xs) xs)))))
 
       # "[] : t"
