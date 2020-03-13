@@ -2,4 +2,4 @@
   :name "dhall")
 
 (declare-source
-  :source ["parser.janet"])
+  :source ["dhall.janet" "emit.janet" "eval.janet" "parser.janet"])
