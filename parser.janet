@@ -44,7 +44,7 @@
       # * not ASCII
       # * not part of a surrogate pair
       # * not a "non-character"
-      :valid-non-ascii 0
+      :valid-non-ascii (* "TODO")
 
       :tab "\t"
 
@@ -426,7 +426,7 @@
 
       # :import (* :import-hashed (? (* :whsp :as :whsp1 (+ :Text :Location))))
 
-      :import (* "import")
+      :import (* "TODO")
 
       :expression
         (+
