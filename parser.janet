@@ -1,3 +1,14 @@
+(defmacro- op-expr
+  "Capture operator expressions"
+  [op]
+  ~(fn ,(symbol "capture:" op)
+    [first & rest]
+    (var out first)
+    (when (> (length rest) 0)
+      (each x rest
+        (set out {:type ,op :L out :R x})))
+    out))
+
 (def- pat
   (peg/compile
     ~{
@@ -469,20 +480,33 @@
       :operator-expression :import-alt-expression
 
       # Nonempty-whitespace to disambiguate `http://a/a?a`
-      :import-alt-expression    (* :or-expression            (any (* :whsp "?" :whsp1 :or-expression)))
-      :or-expression            (* :plus-expression          (any (* :whsp "||" :whsp :plus-expression)))
+      :import-alt-expression
+        (/ (* :or-expression            (any (* :whsp "?" :whsp1 :or-expression))) ,(op-expr :ImportAlt))
+      :or-expression
+       (/ (* :plus-expression          (any (* :whsp "||" :whsp :plus-expression))) ,(op-expr :Or))
       # Nonempty-whitespace to disambiguate `f +2`
-      :plus-expression          (* :text-append-expression   (any (* :whsp "+"  :whsp1 :text-append-expression)))
-      :text-append-expression   (* :list-append-expression   (any (* :whsp "++" :whsp  :list-append-expression)))
-      :list-append-expression   (* :and-expression           (any (* :whsp "#"  :whsp  :and-expression)))
-      :and-expression           (* :combine-expression       (any (* :whsp "&&" :whsp  :combine-expression)))
-      :combine-expression       (* :prefer-expression        (any (* :whsp :combine :whsp :prefer-expression)))
-      :prefer-expression        (* :combine-types-expression (any (* :whsp :prefer  :whsp :combine-types-expression)))
-      :combine-types-expression (* :times-expression         (any (* :whsp :combine-types :whsp :times-expression)))
-      :times-expression         (* :equal-expression         (any (* :whsp "*"  :whsp  :equal-expression)))
-      :equal-expression         (* :not-equal-expression     (any (* :whsp "==" :whsp  :not-equal-expression)))
-      :not-equal-expression     (* :equivalent-expression    (any (* :whsp "!=" :whsp  :equivalent-expression)))
-      :equivalent-expression    (* :with-expression          (any (* :whsp :equivalent :whsp :with-expression)))
+      :plus-expression
+        (/ (* :text-append-expression   (any (* :whsp "+"  :whsp1 :text-append-expression))) ,(op-expr :Plus))
+      :text-append-expression
+        (/ (* :list-append-expression   (any (* :whsp "++" :whsp  :list-append-expression))) ,(op-expr :TextAppend))
+      :list-append-expression
+        (/ (* :and-expression           (any (* :whsp "#"  :whsp  :and-expression))) ,(op-expr :ListAppend))
+      :and-expression
+        (/ (* :combine-expression       (any (* :whsp "&&" :whsp  :combine-expression))) ,(op-expr :And))
+      :combine-expression
+        (/ (* :prefer-expression        (any (* :whsp :combine :whsp :prefer-expression))) ,(op-expr :Combine))
+      :prefer-expression
+        (/ (* :combine-types-expression (any (* :whsp :prefer  :whsp :combine-types-expression))) ,(op-expr :Prefer))
+      :combine-types-expression
+        (/ (* :times-expression         (any (* :whsp :combine-types :whsp :times-expression))) ,(op-expr :CombineTypes))
+      :times-expression
+        (/ (* :equal-expression         (any (* :whsp "*"  :whsp  :equal-expression))) ,(op-expr :Multiply))
+      :equal-expression
+        (/ (* :not-equal-expression     (any (* :whsp "==" :whsp  :not-equal-expression))) ,(op-expr :Equal))
+      :not-equal-expression
+        (/ (* :equivalent-expression    (any (* :whsp "!=" :whsp  :equivalent-expression))) ,(op-expr :NotEqual))
+      :equivalent-expression
+        (/ (* :with-expression          (any (* :whsp :equivalent :whsp :with-expression))) ,(op-expr :Equivalent))
 
       :with-expression (* :application-expression
                           (any (* :whsp1 :with :whsp1 :any-label-or-some
