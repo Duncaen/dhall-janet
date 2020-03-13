@@ -1,3 +1,26 @@
+(defmacro- unicode
+  "Convert unicode codepoint to characters"
+  [c]
+  (cond
+    (< c 0x80)
+    (string/format "%c" c)
+    (< c 0x800)
+    (string/format "%c%c"
+                   (bor 0xC0 (brshift c 6))
+                   (bor 0x80 (band 0x3F c)))
+    (< c 0x10000)
+    (string/format "%c%c%c"
+                   (bor 0xE0 (brshift c 12))
+                   (bor 0x80 (band 0x3F (brshift c 6)))
+                   (bor 0x80 (band 0x3F c)))
+    (< c 0x110000)
+    (string/format "%c%c%c%c"
+                   (bor 0xF0 (brshift c 18))
+                   (bor 0x80 (band (brshift c 12) 0x3F))
+                   (bor 0x80 (band (brshift c 6) 0x3F))
+                   (bor 0x80 (band c 0x3F)))
+    (error (string "invalid unicode point: " c))))
+
 (defmacro- op-expr
   "Capture operator expressions"
   [op]
@@ -253,7 +276,7 @@
       :Some "Some"
       :toMap "toMap"
       :assert "assert"
-      :forall (+ "∀" "forall")
+      :forall (+ ,(unicode 0x2200) "forall")
       :with "with"
 
       # Unused rule that could be used as negative lookahead in the
@@ -348,12 +371,12 @@
       :Text-show         "Text/show"
 
       # Operators
-      :combine (+ "\x2227" "/\\")
-      :combine-types (+ "\x2A53" "//\\\\")
-      :equivalent (+ "\x2261" "===")
-      :prefer (+ "\x2AFD" "//")
-      :lambda (+ "\x2BB" "\\")
-      :arrow (+ "→" "->")
+      :combine (+ ,(unicode 0x2227) "/\\")
+      :combine-types (+ ,(unicode 0x2A53) "//\\\\")
+      :equivalent (* (+ ,(unicode 0x2261) "===") )
+      :prefer (+ ,(unicode 0x2AFD) "//")
+      :lambda (+ ,(unicode 0x2BB) "\\")
+      :arrow (+ ,(unicode 0x2192) "->")
       :complete "::"
 
       :exponent (* "e" (? (+ "+" "-")) (some :DIGIT))
