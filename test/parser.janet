@@ -59,6 +59,11 @@
 (assert!= nil (parser/parse `1 != 1`))
 (assert!= nil (parser/parse `{=} === {=}`))
 (assert!= nil (parser/parse `(foo bar)`))
+(assert!= nil (parser/parse ```
+                            ''
+                            foo bar
+                            ''
+                            ```))
 (assert=
   ((parser/parse `TypeSynonym`) :name)
   "TypeSynonym")

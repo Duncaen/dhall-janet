@@ -211,21 +211,7 @@
          (range "\x5D\x7F")
          :valid-non-ascii)
 
-      :double-quote-literal
-        (/ (* "\x22" (any :double-quote-chunk) "\x22")
-             ,(fn double-quote-literal
-                [& xs]
-                (var str @"")
-                (var chunks @[])
-                (each x xs
-                  (case (type x)
-                    :string (buffer/push-string str x)
-                    :struct (do
-                      (array/push chunks
-                        {:term :Chunk :Prefix (string str) :E x})
-                      (buffer/clear str))
-                    (error "unhandled type in double-quoted-literal")))
-                {:term :TextLit :Chunks chunks :Suffix (string str)}))
+      :double-quote-literal (* "\x22" (any :double-quote-chunk) "\x22")
 
       # NOTE: The only way to end a single-quote string literal with a single quote is
       # to either interpolate the single quote, like this:
@@ -240,11 +226,11 @@
       # which is interpreted as an escaped pair of single quotes
       :single-quote-continue
         (+
-          (* :interpolation         :single-quote-continue)
-          (* :escaped-quote-pair    :single-quote-continue)
-          (* :escaped-interpolation :single-quote-continue)
+          (* :interpolation          :single-quote-continue)
+          (* ':escaped-quote-pair    :single-quote-continue)
+          (* ':escaped-interpolation :single-quote-continue)
           "''" # End of text literal
-          (* :single-quote-char     :single-quote-continue))
+          (* ':single-quote-char     :single-quote-continue))
 
       # Escape two single quotes (i.e. replace this sequence with "''")
       :escaped-quote-pair "'''"
@@ -262,7 +248,20 @@
 
       :interpolation (* "${" :complete-expression "}")
 
-      :text-literal (+ :double-quote-literal :single-quote-literal)
+      :text-literal (/ (+ :double-quote-literal :single-quote-literal)
+      ,(fn text-literal
+        [& xs]
+        (var str @"")
+        (var chunks @[])
+        (each x xs
+        (case (type x)
+          :string (buffer/push-string str x)
+          :struct (do
+          (array/push chunks
+          {:type :Chunk :Prefix (string str) :E x})
+          (buffer/clear str))
+          (error "unhandled type in text-literal")))
+          {:type :TextLit :Chunks chunks :Suffix (string str)}))
 
       :if "if"
       :then "then"
