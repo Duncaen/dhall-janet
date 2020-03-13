@@ -97,7 +97,7 @@
 
       # NOTE: Dhall does not support Unicode labels, mainly to minimize the potential
       # for code obfuscation
-      :label (+ (* "`" :quoted-label "`") :simple-label)
+      :label (+ (* "`" (<- :quoted-label) "`") (<- :simple-label))
 
       # A nonreserved-label cannot not be any of the reserved identifiers for builtins
       # (unless quoted).
@@ -109,7 +109,7 @@
       #      builtin 1*simple-label-next-char
       #    / !builtin label
       :nonreserved-label
-        (+ (* :builtin (some :simple-label-next-char))
+        (+ (<- (* (drop :builtin) (some :simple-label-next-char)))
            (* (! :builtin) :label))
 
       # An any-label is allowed to be one of the reserved identifiers (but not a keyword).
@@ -419,7 +419,7 @@
       # Otherwise, this is a variable with name and index matching the label and index.
       :identifier (+ :variable :builtin)
 
-      :variable (/ (* (<- :nonreserved-label) (? (* :whsp "@" :whsp :natural-literal)))
+      :variable (/ (* :nonreserved-label (? (* :whsp "@" :whsp :natural-literal)))
                      ,(fn variable
                         [a &opt b]
                         (default b 0)
@@ -432,7 +432,7 @@
       :expression
         (+
          # "\(x : a) -> b"
-         (/ (* :lambda :whsp "(" :whsp (<- :nonreserved-label) :whsp ":" :whsp1 :expression :whsp ")"
+         (/ (* :lambda :whsp "(" :whsp :nonreserved-label :whsp ":" :whsp1 :expression :whsp ")"
                  :whsp :arrow :whsp :expression)
               ,(fn lambda [x y z] {:term :Lambda :label x :type y :body z}))
 
@@ -449,7 +449,7 @@
               ,(fn let [a b] {:term :Let :bindings a :body b}))
 
          # "forall (x : a) -> b"
-         (/ (* :forall :whsp "(" :whsp (<- :nonreserved-label) :whsp ":" :whsp1 :expression :whsp ")"
+         (/ (* :forall :whsp "(" :whsp :nonreserved-label :whsp ":" :whsp1 :expression :whsp ")"
                  :whsp :arrow :whsp :expression)
               ,(fn forall
                  [x a b]
@@ -490,18 +490,27 @@
          :annotated-expression)
 
       # Nonempty-whitespace to disambiguate `env:VARIABLE` from type annotations
-      :annotated-expression (* :operator-expression (? (* :whsp ":" :whsp1 :expression)))
+      :annotated-expression
+      (/
+       (* :operator-expression (? (* :whsp ":" :whsp1 :expression)))
+       ,(fn annot
+        [a &opt b]
+        (if (nil? b)
+          a
+          {:term :Annot :e a :type b})))
 
       # "let x = e1"
       :let-binding
-      (/ (* :let :whsp1 (<- :nonreserved-label) :whsp (? (* ":" :whsp1 :expression :whsp)) "="
-                     :whsp :expression :whsp)
-                  ,(fn let-binding
-                     [a & xs]
-                     (case (length xs)
-                       2 {:name a :type (xs 0) :value (xs 1)}
-                       1 {:name a :type nil    :value (xs 0)}
-                       (error (string/format "got unhandled length: %d: %q" (length xs) xs)))))
+      (/ (* :let :whsp1 :nonreserved-label :whsp
+            (? (* ":" :whsp1 :expression :whsp)) "=" :whsp :expression :whsp)
+         ,(fn let-binding
+            [a & xs]
+            (pp a)
+            (case (length xs)
+              2 {:name a :type (xs 0) :value (xs 1)}
+              1 {:name a :type nil    :value (xs 0)}
+              (error (string/format "got unhandled length: %d: %q"
+                                    (length xs) xs)))))
 
       # "[] : t"
       :empty-list-literal
