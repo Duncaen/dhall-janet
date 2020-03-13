@@ -326,7 +326,7 @@
         (* :Double            (constant {:term :Double}))
         (* :Text              (constant {:term :Text}))
         (* :List              (constant {:term :List}))
-        (* :term              (constant {:term :term}))
+        (* :Type              (constant {:term :Type}))
         (* :Kind              (constant {:term :Kind}))
         (* :Sort              (constant {:term :Sort})))
 
@@ -344,7 +344,7 @@
       :Natural           "Natural"
       :Integer           "Integer"
       :Double            "Double"
-      :term              "Type"
+      :Type              "Type"
       :Kind              "Kind"
       :Sort              "Sort"
       :Natural-fold      "Natural/fold"
