@@ -366,11 +366,13 @@
       :natural-literal
         (+
          # Hexadecimal with "0x" prefix
-         (* "0x" (some :HEXDIG))
+         (/ (<- (* "0x" (some :HEXDIG)))
+              ,(fn [s] {:type :NaturalLiteral :Value (scan-number s)}))
          # Decimal; leading 0 digits are not allowed
-         (cmt (<- (* (range "19") (any :DIGIT))) ,scan-number)
+         (/ (<- (* (range "19") (any :DIGIT)))
+              ,(fn [s] {:type :NaturalLiteral :Value (scan-number s)}))
          # ... except for 0 itself
-         (* "0" (constant 0)))
+         (* "0" (constant {:type :NaturalLiteral :Value 0})))
 
       :integer-literal (* (+ "+" "-") :natural-literal)
 
