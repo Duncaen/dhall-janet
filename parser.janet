@@ -26,11 +26,13 @@
   [op]
   ~(fn ,(symbol "capture:" op)
     [first & rest]
-    (var out first)
-    (when (> (length rest) 0)
-      (each x rest
-        (set out {:type ,op :L out :R x})))
-    out))
+    (if (> (length rest) 0)
+      (do
+        (var out first)
+        (each x rest
+          (set out {:type ,op :l out :r x}))
+        out)
+      first)))
 
 (def- pat
   (peg/compile
@@ -210,7 +212,7 @@
          :valid-non-ascii)
 
       :double-quote-literal
-        (cmt (* "\x22" (any :double-quote-chunk) "\x22")
+        (/ (* "\x22" (any :double-quote-chunk) "\x22")
              ,(fn double-quote-literal
                 [& xs]
                 (var str @"")
@@ -401,12 +403,12 @@
         (+
          # Hexadecimal with "0x" prefix
          (/ (<- (* "0x" (some :HEXDIG)))
-              ,(fn [s] {:type :NaturalLiteral :Value (scan-number s)}))
+              ,(fn [s] {:type :NaturalLiteral :n (scan-number s)}))
          # Decimal; leading 0 digits are not allowed
          (/ (<- (* (range "19") (any :DIGIT)))
-              ,(fn [s] {:type :NaturalLiteral :Value (scan-number s)}))
+              ,(fn [s] {:type :NaturalLiteral :n (scan-number s)}))
          # ... except for 0 itself
-         (* "0" (constant {:type :NaturalLiteral :Value 0})))
+         (* "0" (constant {:type :NaturalLiteral :n 0})))
 
       :integer-literal (* (+ "+" "-") :natural-literal)
 
@@ -417,11 +419,11 @@
       # Otherwise, this is a variable with name and index matching the label and index.
       :identifier (+ :variable :builtin)
 
-      :variable (cmt (* (<- :nonreserved-label) (? (* :whsp "@" :whsp :natural-literal)))
+      :variable (/ (* (<- :nonreserved-label) (? (* :whsp "@" :whsp :natural-literal)))
                      ,(fn variable
                         [a &opt b]
                         (default b 0)
-                        {:type :Var :l a :n b}))
+                        {:type :Var :name a :index b}))
 
       # :import (* :import-hashed (? (* :whsp :as :whsp1 (+ :Text :Location))))
 
@@ -430,32 +432,36 @@
       :expression
         (+
          # "\(x : a) -> b"
-         (cmt (* :lambda :whsp "(" :whsp (<- :nonreserved-label) :whsp ":" :whsp1 :expression :whsp ")"
+         (/ (* :lambda :whsp "(" :whsp (<- :nonreserved-label) :whsp ":" :whsp1 :expression :whsp ")"
                  :whsp :arrow :whsp :expression)
-              ,(fn lambda [x y z] {:type :Lam :A x :B y :C z}))
+              ,(fn lambda [x y z] {:type :Lambda :label x :typ y :body z}))
 
          # "if a then b else c"
-         (cmt (* :if :whsp1 :expression :whsp :then :whsp1 :expression :whsp :else :whsp1 :expression)
-              ,(fn if [a b c] {:type :If :A a :B b :C c}))
+         (/ (* :if :whsp1 :expression :whsp :then :whsp1 :expression :whsp :else :whsp1 :expression)
+              ,(fn if [a b c] {:type :If :a a :b b :c c}))
 
          # "let x : t = e1 in e2"
          # "let x     = e1 in e2"
          # We allow dropping the `in` between adjacent let-expressions; the following are equivalent:
          # "let x = e1 let y = e2 in e3"
          # "let x = e1 in let y = e2 in e3"
-         (cmt (* (some :let-binding) :in :whsp1 :expression)
-              ,(fn let [a b] {:type :Let :Bindings a :A b}))
+         (/ (* (group (some :let-binding)) :in :whsp1 :expression)
+              ,(fn let [a b] {:type :Let :bindings a :body b}))
 
          # "forall (x : a) -> b"
-         (cmt (* :forall :whsp "(" :whsp (<- :nonreserved-label) :whsp ":" :whsp1 :expression :whsp ")"
+         (/ (* :forall :whsp "(" :whsp (<- :nonreserved-label) :whsp ":" :whsp1 :expression :whsp ")"
                  :whsp :arrow :whsp :expression)
-              ,(fn forall [x a b] {:type :Forall :X x :A a :B b}))
+              ,(fn forall
+                 [x a b]
+                 {:type :Pi :label x :typ a :body b}))
 
          #  "a -> b"
          #
          # NOTE: Backtrack if parsing this alternative fails
-         (cmt (* :operator-expression :whsp :arrow :whsp :expression)
-              ,(fn operator-expression [a b] {type :OpExpr :A a :B b}))
+         (/ (* :operator-expression :whsp :arrow :whsp :expression)
+              ,(fn operator-expression
+                 [a b]
+                 {:type :Pi :label "_" :typ a :body b}))
 
          # "merge e1 e2 : t"
          #
@@ -487,14 +493,15 @@
       :annotated-expression (* :operator-expression (? (* :whsp ":" :whsp1 :expression)))
 
       # "let x = e1"
-      :let-binding (cmt (* :let :whsp1 (<- :nonreserved-label) :whsp (? (* ":" :whsp1 :expression :whsp)) "="
-                           :whsp :expression :whsp)
-                        ,(fn binding
-                           [a & xs]
-                           (case (length xs)
-                             2 {:type :Binding :A a :B (xs 0) :C (xs 1)}
-                             1 {:type :Binding :A a :B nil    :C (xs 0)}
-                             (error (string/format "got unhandled length: %d: %q" (length xs) xs)))))
+      :let-binding
+      (/ (* :let :whsp1 (<- :nonreserved-label) :whsp (? (* ":" :whsp1 :expression :whsp)) "="
+                     :whsp :expression :whsp)
+                  ,(fn let-binding
+                     [a & xs]
+                     (case (length xs)
+                       2 {:name a :typ (xs 0) :value (xs 1)}
+                       1 {:name a :typ nil    :value (xs 0)}
+                       (error (string/format "got unhandled length: %d: %q" (length xs) xs)))))
 
       # "[] : t"
       :empty-list-literal
@@ -523,7 +530,7 @@
       :combine-types-expression
         (/ (* :times-expression         (any (* :whsp :combine-types :whsp :times-expression))) ,(op-expr :CombineTypes))
       :times-expression
-        (/ (* :equal-expression         (any (* :whsp "*"  :whsp  :equal-expression))) ,(op-expr :Multiply))
+        (/ (* :equal-expression         (any (* :whsp "*"  :whsp  :equal-expression))) ,(op-expr :Times))
       :equal-expression
         (/ (* :not-equal-expression     (any (* :whsp "==" :whsp  :not-equal-expression))) ,(op-expr :Equal))
       :not-equal-expression
@@ -539,7 +546,17 @@
       # Import expressions need to be separated by some whitespace, otherwise there
       # would be ambiguity: `./ab` could be interpreted as "import the file `./ab`",
       # or "apply the import `./a` to label `b`"
-      :application-expression (* :first-application-expression (any (* :whsp1 :import-expression)))
+      :application-expression
+      (/ (* :first-application-expression (any (* :whsp1 :import-expression)))
+         ,(fn
+            [e & args]
+            (if (> (length args) 0)
+              (do
+                (var out e)
+                (each arg args
+                  (set out {:type :App :fn out :arg arg}))
+                out)
+              e)))
 
       :first-application-expression
         (+
@@ -639,4 +656,4 @@
 (defn parse
   ""
   [chunk]
-  (peg/match pat chunk))
+  (if-let [res (peg/match pat chunk)] (res 0) nil))
